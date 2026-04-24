@@ -40,5 +40,30 @@ namespace IdentityCore.Controllers
 
             return StatusCode(StatusCodes.Status201Created, new { message = "Registration successful." });
         }
+
+        /// <summary>
+        /// Login & JWT access + refresh tokens.
+        /// </summary>
+
+        /// <summary>
+        /// Refresh an expires access token.
+        /// </summary>
+
+        /// <summary>
+        /// Log out by revoking the refresh token.
+        /// </summary>
+
+        /// <summary>
+        /// Log out from all devices by revoking every refresh token.
+        /// </summary>
+        [HttpPost("logout-all")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> LogoutAll()
+        {
+            var playerId = userManager.GetUserId(User)!;
+            await tokenService.RevokeAllPlayerTokensAsync(playerId);
+            return NoContent();
+        }
     }
 }

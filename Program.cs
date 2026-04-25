@@ -1,9 +1,12 @@
 using IdentityCore.Data;
 using IdentityCore.Entities;
 using IdentityCore.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,14 +33,39 @@ builder.Services.AddIdentity<Player, IdentityRole>(options =>
     options.Lockout.AllowedForNewUsers = true;
 
     // username policy
-
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+// jwt
+var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
+var jwtSecret = jwtSection["Secret"]
+    ?? throw new InvalidOperationException("JWT Secret not cofngiured");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidAudience = jwtSection["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.Zero, // no grace period on expiry
+        };
+    });
+
 // services
 
+builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

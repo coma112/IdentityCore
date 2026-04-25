@@ -4,7 +4,7 @@ services:
     container_name: identity_core_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: rootpw
       MYSQL_DATABASE: identity_core
     ports:
       - "3306:3306"

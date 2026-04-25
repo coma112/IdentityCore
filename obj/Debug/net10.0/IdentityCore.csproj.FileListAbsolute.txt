@@ -32,3 +32,4 @@ C:\Users\User\source\repos\IdentityCore\obj\Debug\net10.0\refint\IdentityCore.dl
 C:\Users\User\source\repos\IdentityCore\obj\Debug\net10.0\IdentityCore.pdb
 C:\Users\User\source\repos\IdentityCore\obj\Debug\net10.0\IdentityCore.genruntimeconfig.cache
 C:\Users\User\source\repos\IdentityCore\obj\Debug\net10.0\ref\IdentityCore.dll
+C:\Users\User\source\repos\IdentityCore\obj\Debug\net10.0\IdentityCore.sourcelink.json

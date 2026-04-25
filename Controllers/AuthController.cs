@@ -95,12 +95,12 @@ namespace IdentityCore.Controllers
                 var (accessToken, newRefreshToken) = await tokenService.RotateRefreshTokenAsync(request.RefreshToken);
                 Player? player = await userManager.FindByIdAsync(newRefreshToken.PlayerId);
 
-                return Ok(new AuthResponse(
-                AccessToken: accessToken,
-                RefreshToken: newRefreshToken.Token,
-                ExpiresAt: newRefreshToken.ExpiresAt,
-                Username: player!.UserName!,
-                Email: player!.Email!
+                return Ok(new AuthResponse( 
+                    AccessToken: accessToken,
+                    RefreshToken: newRefreshToken.Token,
+                    ExpiresAt: newRefreshToken.ExpiresAt,
+                    Username: player!.UserName!,
+                    Email: player!.Email!
                 ));
             } catch (InvalidOperationException exception)
             {

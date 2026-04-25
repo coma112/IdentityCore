@@ -93,7 +93,7 @@ namespace IdentityCore.Controllers
             try
             {
                 var (accessToken, newRefreshToken) = await tokenService.RotateRefreshTokenAsync(request.RefreshToken);
-                Player player = await userManager.FindByIdAsync(newRefreshToken.PlayerId);
+                Player? player = await userManager.FindByIdAsync(newRefreshToken.PlayerId);
 
                 return Ok(new AuthResponse(
                 AccessToken: accessToken,

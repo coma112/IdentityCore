@@ -3,6 +3,7 @@ using IdentityCore.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,7 +23,7 @@ namespace IdentityCore.Services
             var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Sub, player.Id),
-                new(JwtRegisteredClaimNames.Email, player.Email),
+                new(JwtRegisteredClaimNames.Email, player.Email ?? string.Empty),
                 new(JwtRegisteredClaimNames.UniqueName, player.UserName!),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
@@ -47,7 +48,7 @@ namespace IdentityCore.Services
                 ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
             };
 
-            db.RefresthTokens.Add(token);
+            db.RefreshTokens.Add(token);
             await db.SaveChangesAsync();
 
             return token;

@@ -59,10 +59,10 @@ namespace IdentityCore.Services
             var existing = await db.RefreshTokens
                 .Include(t => t.Player)
                 .FirstOrDefaultAsync(t => t.Token == oldToken)
-                ?? throw new InvalidOperationException("RT nem talalhato");
+                ?? throw new InvalidOperationException("Refresh token not found");
 
             if (!existing.IsActive)
-                throw new InvalidOperationException("RT mán' nem aktiv");
+                throw new InvalidOperationException("Refresh token is not active no more.");
 
             existing.RevokedAt = DateTime.UtcNow;
 

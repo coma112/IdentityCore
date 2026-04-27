@@ -2,7 +2,9 @@
 
 namespace IdentityCore.DTOs
 {
-    public record RefreshTokenRequest(
-        [Required] string RefreshToken
-    );
+    public class RefreshTokenRequest
+    {
+        [Required]
+        public string RefreshToken { get; set; } = string.Empty;
+    }
 }

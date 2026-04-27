@@ -2,8 +2,12 @@
 
 namespace IdentityCore.DTOs
 {
-    public record LoginRequest(
-        [Required] string UsernameOrEmail,
-        [Required] string Password
-    );
+    public class LoginRequest
+    {
+        [Required]
+        public string UsernameOrEmail { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
 }

@@ -2,7 +2,9 @@
 
 namespace IdentityCore.DTOs
 {
-    public record LogoutRequest(
-        [Required] string RefreshToken
-    );
+    public class LogoutRequest
+    {
+        [Required]
+        public string RefreshToken { get; set; } = string.Empty;
+    }
 }

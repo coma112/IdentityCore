@@ -2,7 +2,9 @@
 
 namespace IdentityCore.DTOs
 {
-    public record RequestAccountDeletionRequest(
-        [Required] string Password
-    );
+    public class RequestAccountDeletionRequest
+    {
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
 }

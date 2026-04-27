@@ -6,8 +6,18 @@ namespace IdentityCore.Services
     {
         string GenerateAccessToken(Player player);
         Task<RefreshToken> GenerateRefreshTokenAsync(Player player);
-        Task<(string accessToken, RefreshToken refreshToken)> RotateRefreshTokenAsync(string old);
-        Task RevokeRefreshTokenAsync(string token);
+
+        /// <summary>
+        /// Rotates the refresh token and gives a new refresh + access token pair.
+        /// </summary>
+        Task<(string accessToken, RefreshToken refreshToken)> RotateRefreshTokenAsync(string oldToken, string playerId);
+
+        /// <summary>
+        /// Revokes the given refresh token but only if
+        /// the current player has the ownership.
+        /// </summary>
+        Task RevokeRefreshTokenAsync(string token, string playerId);
+
         Task RevokeAllPlayerTokensAsync(string playerId);
     }
 }

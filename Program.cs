@@ -36,6 +36,7 @@ builder.Services.AddIdentity<Player, IdentityRole>(options =>
 
     // username policy
     options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+";
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();

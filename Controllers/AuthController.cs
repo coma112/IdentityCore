@@ -98,8 +98,8 @@ namespace IdentityCore.Controllers
         /// <summary>
         /// Refresh an expired access token.
         /// </summary>
-        [HttpPost("refresh")]
         [Authorize]
+        [HttpPost("refresh")]
         [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)

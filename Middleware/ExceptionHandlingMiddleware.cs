@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
 using IdentityCore.DTOs;
-using Microsoft.AspNetCore.Diagnostics;
 
 namespace IdentityCore.Middleware
 {

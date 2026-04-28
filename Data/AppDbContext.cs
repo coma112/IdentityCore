@@ -7,7 +7,6 @@ namespace IdentityCore.Data
     public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<Player>(options)
     {
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-        public DbSet<PlayerScore> PlayerScores => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

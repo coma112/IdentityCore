@@ -1,71 +1,85 @@
-﻿namespace IdentityCore.Controllers;
-
-using IdentityCore.DTOs;
+﻿using IdentityCore.DTOs;
 using IdentityCore.Entities;
 using IdentityCore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-[Produces("application/json")]
-public class PlayerController(
-    UserManager<Player> userManager,
-    ITokenService tokenService) : ControllerBase
+namespace IdentityCore.Controllers
 {
-    /// <summary>
-    /// Reset the player's own password by providing the current password and a new one.
-    /// The player must be logged in.
-    /// </summary>
-    [HttpPost("change-password")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    [Produces("application/json")]
+    public class PlayerController : ControllerBase
     {
-        var player = await userManager.GetUserAsync(User);
-        if (player is null)
-            return Unauthorized();
+        private readonly UserManager<Player> _userManager;
+        private readonly ITokenService _tokenService;
 
-        var result = await userManager.ChangePasswordAsync(player, request.CurrentPassword, request.NewPassword);
+        public PlayerController(
+            UserManager<Player> userManager,
+            ITokenService tokenService)
+        {
+            _userManager = userManager;
+            _tokenService = tokenService;
+        }
 
-        if (!result.Succeeded)
-            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+        /// <summary>
+        /// Reset the player's own password by providing the current password and a new one.
+        /// The player must be logged in.
+        /// </summary>
+        [HttpPost("change-password")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var player = await _userManager.GetUserAsync(User);
+            if (player is null)
+                return Unauthorized(new ErrorResponse("Invalid credentials."));
 
-        // Revoke all existing sessions, player must login again with new password
-        await tokenService.RevokeAllPlayerTokensAsync(player.Id);
+            var result = await _userManager.ChangePasswordAsync(player, request.CurrentPassword, request.NewPassword);
 
-        return NoContent();
-    }
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ErrorResponse(
+                    "Password change failed.",
+                    result.Errors.Select(e => e.Description)
+                ));
+            }
 
-    /// <summary>
-    /// Request deletion of the player's own account.
-    /// </summary>
-    [HttpPost("request-deletion")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> RequestDeletion([FromBody] RequestAccountDeletionRequest request)
-    {
-        var player = await userManager.GetUserAsync(User);
-        if (player is null)
-            return Unauthorized();
+            await _tokenService.RevokeAllPlayerTokensAsync(player.Id);
 
-        if (player.DeleteRequestedAt.HasValue)
-            return Conflict(new { message = "Account deletion has already been requested." });
+            return NoContent();
+        }
 
-        var passwordValid = await userManager.CheckPasswordAsync(player, request.Password);
-        if (!passwordValid)
-            return BadRequest(new { message = "Invalid password." });
+        /// <summary>
+        /// Request deletion of the player's own account.
+        /// </summary>
+        [HttpPost("request-deletion")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> RequestDeletion([FromBody] RequestAccountDeletionRequest request)
+        {
+            var player = await _userManager.GetUserAsync(User);
+            if (player is null)
+                return Unauthorized(new ErrorResponse("Invalid credentials."));
 
-        player.DeleteRequestedAt = DateTime.UtcNow;
+            if (player.DeleteRequestedAt.HasValue)
+                return Conflict(new ErrorResponse("Account deletion has already been requested."));
 
-        await userManager.UpdateAsync(player);
-        await tokenService.RevokeAllPlayerTokensAsync(player.Id);
+            var passwordValid = await _userManager.CheckPasswordAsync(player, request.Password);
+            if (!passwordValid)
+                return BadRequest(new ErrorResponse("Invalid password."));
 
-        return NoContent();
+            player.DeleteRequestedAt = DateTime.UtcNow;
+
+            await _userManager.UpdateAsync(player);
+            await _tokenService.RevokeAllPlayerTokensAsync(player.Id);
+
+            return NoContent();
+        }
     }
 }

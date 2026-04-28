@@ -1,5 +1,7 @@
+using IdentityCore.Configuration;
 using IdentityCore.Data;
 using IdentityCore.Entities;
+using IdentityCore.Middleware;
 using IdentityCore.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // db
 var connectionString = builder.Configuration.GetConnectionString("Default")
-    ?? throw new InvalidOperationException("Nincsen key");
+    ?? throw new InvalidOperationException("Connection string not configured.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -20,14 +22,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // identity
 builder.Services.AddIdentity<Player, IdentityRole>(options =>
 {
-    // password polciy
+    // password policy
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
 
-    // lockout policy -> 5 failed attempst = 15 min lock
+    // lockout policy —> 5 attempts = 15 min lockout
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
@@ -41,36 +43,37 @@ builder.Services.AddIdentity<Player, IdentityRole>(options =>
 // jwt
 var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
 var jwtSecret = jwtSection["Secret"]
-    ?? throw new InvalidOperationException("JWT Secret not cofngiured");
+    ?? throw new InvalidOperationException("JWT Secret not configured.");
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSection["Issuer"],
-            ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ClockSkew = TimeSpan.Zero, // no grace period on expiry
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSection["Issuer"],
+        ValidAudience = jwtSection["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.Zero, // no grace period
+    };
+});
 
 // services
-
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -83,7 +86,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// auto migrate on startup (dev!)
+// auto migrate on start (only dev!)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();

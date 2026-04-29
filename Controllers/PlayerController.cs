@@ -64,6 +64,7 @@ namespace IdentityCore.Controllers
         public async Task<IActionResult> RequestDeletion([FromBody] RequestAccountDeletionRequest request)
         {
             var player = await _userManager.GetUserAsync(User);
+
             if (player is null)
                 return Unauthorized(new ErrorResponse("Invalid credentials."));
 
@@ -71,6 +72,7 @@ namespace IdentityCore.Controllers
                 return Conflict(new ErrorResponse("Account deletion has already been requested."));
 
             var passwordValid = await _userManager.CheckPasswordAsync(player, request.Password);
+
             if (!passwordValid)
                 return BadRequest(new ErrorResponse("Invalid password."));
 

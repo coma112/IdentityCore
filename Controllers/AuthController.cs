@@ -44,7 +44,6 @@ namespace IdentityCore.Controllers
 
             if (!result.Succeeded)
             {
-                // Egységes ErrorResponse minden hibaválasznál.
                 return BadRequest(new ErrorResponse(
                     "Registration failed.",
                     result.Errors.Select(e => e.Description)

@@ -5,6 +5,7 @@ using System.Text;
 using IdentityCore.Configuration;
 using IdentityCore.Data;
 using IdentityCore.Entities;
+using IdentityCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -62,14 +63,14 @@ namespace IdentityCore.Services
             return token;
         }
 
-        public async Task<(string accessToken, RefreshToken refreshToken)> RotateRefreshTokenAsync(string oldToken, string playerId)
+        public async Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken, string playerId)
         {
             var existing = await _db.RefreshTokens
                 .Include(t => t.Player)
                 .FirstOrDefaultAsync(t => t.Token == oldToken);
 
             if (existing is null || existing.PlayerId != playerId || !existing.IsActive)
-                throw new InvalidOperationException("Invalid or inactive refresh token.");
+                throw new UnauthorizedException("Invalid or inactive refresh token.");
 
             existing.RevokedAt = DateTime.UtcNow;
 
@@ -84,7 +85,7 @@ namespace IdentityCore.Services
             await _db.SaveChangesAsync();
 
             var accessToken = GenerateAccessToken(existing.Player);
-            return (accessToken, newRefreshToken);
+            return (accessToken, newRefreshToken, existing.Player);
         }
 
         public async Task RevokeRefreshTokenAsync(string token, string playerId)

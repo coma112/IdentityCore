@@ -1,5 +1,6 @@
 ﻿using IdentityCore.DTOs;
 using IdentityCore.Entities;
+using IdentityCore.Exceptions;
 using IdentityCore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -34,19 +35,15 @@ namespace IdentityCore.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var player = await _userManager.GetUserAsync(User);
-            if (player is null)
-                return Unauthorized(new ErrorResponse("Invalid credentials."));
+            var player = await _userManager.GetUserAsync(User)
+                ?? throw new UnauthorizedException("Invalid credentials.");
 
             var result = await _userManager.ChangePasswordAsync(player, request.CurrentPassword, request.NewPassword);
 
             if (!result.Succeeded)
-            {
-                return BadRequest(new ErrorResponse(
+                throw new BadRequestException(
                     "Password change failed.",
-                    result.Errors.Select(e => e.Description)
-                ));
-            }
+                    result.Errors.Select(e => e.Description));
 
             await _tokenService.RevokeAllPlayerTokensAsync(player.Id);
 
@@ -63,18 +60,15 @@ namespace IdentityCore.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> RequestDeletion([FromBody] RequestAccountDeletionRequest request)
         {
-            var player = await _userManager.GetUserAsync(User);
-
-            if (player is null)
-                return Unauthorized(new ErrorResponse("Invalid credentials."));
+            var player = await _userManager.GetUserAsync(User)
+                ?? throw new UnauthorizedException("Invalid credentials.");
 
             if (player.DeleteRequestedAt.HasValue)
-                return Conflict(new ErrorResponse("Account deletion has already been requested."));
+                throw new ConflictException("Account deletion has already been requested.");
 
             var passwordValid = await _userManager.CheckPasswordAsync(player, request.Password);
-
             if (!passwordValid)
-                return BadRequest(new ErrorResponse("Invalid password."));
+                throw new BadRequestException("Invalid password.");
 
             player.DeleteRequestedAt = DateTime.UtcNow;
 

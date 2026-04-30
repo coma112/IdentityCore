@@ -54,7 +54,7 @@ namespace IdentityCore.Controllers
         }
 
         /// <summary>
-        /// Login &amp; JWT access + refresh tokens.
+        /// Login & JWT access + refresh tokens.
         /// </summary>
         [HttpPost("login")]
         [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
@@ -66,21 +66,15 @@ namespace IdentityCore.Controllers
                 : await _userManager.FindByNameAsync(request.UsernameOrEmail);
 
             if (player is null)
-            {
                 return Unauthorized(new ErrorResponse("Invalid credentials."));
-            }
 
             var result = await _signInManager.CheckPasswordSignInAsync(player, request.Password, lockoutOnFailure: true);
 
             if (result.IsLockedOut)
-            {
                 return Unauthorized(new ErrorResponse("Account is temporarily locked. Try again later."));
-            }
 
             if (!result.Succeeded)
-            {
                 return Unauthorized(new ErrorResponse("Invalid credentials."));
-            }
 
             string accessToken = _tokenService.GenerateAccessToken(player);
             RefreshToken refreshToken = await _tokenService.GenerateRefreshTokenAsync(player);
@@ -105,13 +99,8 @@ namespace IdentityCore.Controllers
         {
             var playerId = _userManager.GetUserId(User)!;
 
-            var (accessToken, newRefreshToken) = await _tokenService.RotateRefreshTokenAsync(request.RefreshToken, playerId);
-
-            Player? player = await _userManager.FindByIdAsync(newRefreshToken.PlayerId);
-            if (player is null)
-            {
-                return Unauthorized(new ErrorResponse("Invalid credentials."));
-            }
+            var (accessToken, newRefreshToken, player) =
+                await _tokenService.RotateRefreshTokenAsync(request.RefreshToken, playerId);
 
             return Ok(new AuthResponse(
                 accessToken: accessToken,

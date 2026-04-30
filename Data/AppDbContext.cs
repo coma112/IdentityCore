@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityCore.Data
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<Player>(options)
+    public class AppDbContext : IdentityDbContext<Player>
     {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)

@@ -9,8 +9,6 @@ namespace IdentityCore.Services
 
         /// <summary>
         /// Rotates the refresh token and gives a new refresh + access token pair.
-        /// The returned <see cref="RefreshToken"/> has its <see cref="RefreshToken.Player"/>
-        /// navigation property populated — no additional DB call needed by the caller.
         /// </summary>
         Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken, string playerId);
 

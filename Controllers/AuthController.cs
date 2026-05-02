@@ -15,19 +15,22 @@ namespace IdentityCore.Controllers
         private readonly UserManager<Player> _userManager;
         private readonly SignInManager<Player> _signInManager;
         private readonly ITokenService _tokenService;
+        private readonly IWalletService _walletService;
 
         public AuthController(
             UserManager<Player> userManager,
             SignInManager<Player> signInManager,
-            ITokenService tokenService)
+            ITokenService tokenService,
+            IWalletService walletService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
+            _walletService = walletService;
         }
 
         /// <summary>
-        /// Register a new player account.
+        /// Register a new player account. Automatically creates a wallet.
         /// </summary>
         [HttpPost("register")]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -49,6 +52,9 @@ namespace IdentityCore.Controllers
                     result.Errors.Select(e => e.Description)
                 ));
             }
+
+            // Automatically provision wallet for the new player
+            await _walletService.CreateWalletForPlayerAsync(player.Id);
 
             return StatusCode(StatusCodes.Status201Created, new { message = "Registration successful." });
         }

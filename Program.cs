@@ -69,6 +69,7 @@ builder.Services.AddAuthentication(options =>
 // services
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 

@@ -166,7 +166,7 @@ namespace IdentityCore.Services
 
             if (request.To.HasValue)
             {
-                query = query.Where(t => t.CreatedAt <= request.To.Value),
+                query = query.Where(t => t.CreatedAt <= request.To.Value);
             }
 
             int totalCount = await query.CountAsync();

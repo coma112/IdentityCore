@@ -6,7 +6,7 @@ namespace IdentityCore.Entities
     {
         public int Id { get; set; }
         public int WalletId { get; set; }
-        public Wallet Wallet { get; set; } = null;
+        public Wallet? Wallet { get; set; }
 
         /// <summary>
         /// positive = deposit | negative = withdrawal.

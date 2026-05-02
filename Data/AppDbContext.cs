@@ -44,10 +44,6 @@ namespace IdentityCore.Data
                     .HasMaxLength(3)
                     .IsRequired();
 
-                e.Property(w => w.RowVersion)
-                    .IsRowVersion()
-                    .IsConcurrencyToken();
-
                 e.HasOne(w => w.Player)
                     .WithMany()
                     .HasForeignKey(w => w.PlayerId)

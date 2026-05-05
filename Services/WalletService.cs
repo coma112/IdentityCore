@@ -55,7 +55,6 @@ namespace IdentityCore.Services
                     wallet.Balance += amount;
                     wallet.UpdatedAt = DateTime.UtcNow;
 
-                    // append event source entry
                     WalletTransaction entry = new WalletTransaction
                     {
                         WalletId = wallet.Id,
@@ -66,19 +65,20 @@ namespace IdentityCore.Services
                     };
 
                     _db.WalletTransactions.Add(entry);
-
-                    // if RowVersion changed since we read (past), EF throws DbUpdateConcurrencyException!!
-
                     await _db.SaveChangesAsync();
                     await transaction.CommitAsync();
 
                     return entry;
-                } 
+                }
                 catch (DbUpdateConcurrencyException) when (attempt < maxRetries - 1)
                 {
                     await transaction.RollbackAsync();
-                    // detach so next attemtp re-fetches from db.
                     _db.ChangeTracker.Clear();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    throw new ConflictException("Deposit failed due to concurrent updates. Please try again.");
                 }
                 catch
                 {
@@ -87,7 +87,7 @@ namespace IdentityCore.Services
                 }
             }
 
-            throw new InvalidOperationException("Deposit failed due to concurrent updates. Please try again.");
+            throw new ConflictException("Deposit failed due to concurrent updates. Please try again.");
         }
 
         public async Task<WalletTransaction> WithdrawAsync(string playerId, decimal amount)
@@ -105,9 +105,7 @@ namespace IdentityCore.Services
                         ?? throw new NotFoundException("Wallet not found.");
 
                     if (wallet.Balance < amount)
-                    {
                         throw new BadRequestException("Insufficient funds.");
-                    }
 
                     wallet.Balance -= amount;
                     wallet.UpdatedAt = DateTime.UtcNow;
@@ -132,6 +130,11 @@ namespace IdentityCore.Services
                     await transaction.RollbackAsync();
                     _db.ChangeTracker.Clear();
                 }
+                catch (DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    throw new ConflictException("Withdrawal failed due to concurrent updates. Please try again.");
+                }
                 catch
                 {
                     await transaction.RollbackAsync();
@@ -139,7 +142,7 @@ namespace IdentityCore.Services
                 }
             }
 
-            throw new InvalidOperationException("Withdrawal failed due to concurrent updates. Please try again.");
+            throw new ConflictException("Withdrawal failed due to concurrent updates. Please try again.");
         }
 
         public async Task<PagedResponse<TransactionResponse>> GetTransactionHistoryAsync(string playerId, TransactionHistoryRequest request)
@@ -160,14 +163,10 @@ namespace IdentityCore.Services
             }
 
             if (request.From.HasValue)
-            {
                 query = query.Where(t => t.CreatedAt >= request.From.Value);
-            }
 
             if (request.To.HasValue)
-            {
                 query = query.Where(t => t.CreatedAt <= request.To.Value);
-            }
 
             int totalCount = await query.CountAsync();
 

@@ -1,10 +1,12 @@
 using IdentityCore.Configuration;
 using IdentityCore.Data;
+using IdentityCore.DTOs;
 using IdentityCore.Entities;
 using IdentityCore.Middleware;
 using IdentityCore.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -29,7 +31,7 @@ builder.Services.AddIdentity<Player, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
 
-    // lockout policy —> 5 attempts = 15 min lockout
+    // lockout policy -> 5 attempts = 15 min lockout
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
@@ -70,7 +72,17 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(x => x.Value!.Errors.Count > 0)
+                .SelectMany(kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage));
+            return new BadRequestObjectResult(new ErrorResponse("Validation failed.", errors));
+        };
+    });
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

@@ -18,7 +18,7 @@ namespace IdentityCore.Services
 
         public async Task<Wallet> CreateWalletForPlayerAsync(string playerId)
         {
-            Wallet wallet = new Wallet
+            var wallet = new Wallet
             {
                 PlayerId = playerId,
                 Balance = 0,
@@ -48,7 +48,7 @@ namespace IdentityCore.Services
 
                 try
                 {
-                    Wallet wallet = await _db.Wallets
+                    var wallet = await _db.Wallets
                         .FirstOrDefaultAsync(w => w.PlayerId == playerId)
                         ?? throw new NotFoundException("Wallet not found.");
 
@@ -100,7 +100,7 @@ namespace IdentityCore.Services
 
                 try
                 {
-                    Wallet wallet = await _db.Wallets
+                    var wallet = await _db.Wallets
                         .FirstOrDefaultAsync(w => w.PlayerId == playerId)
                         ?? throw new NotFoundException("Wallet not found.");
 
@@ -147,7 +147,7 @@ namespace IdentityCore.Services
 
         public async Task<PagedResponse<TransactionResponse>> GetTransactionHistoryAsync(string playerId, TransactionHistoryRequest request)
         {
-            Wallet wallet = await _db.Wallets
+            var wallet = await _db.Wallets
                 .FirstOrDefaultAsync(w => w.PlayerId == playerId)
                 ?? throw new NotFoundException("Wallet not found.");
 

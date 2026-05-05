@@ -81,8 +81,8 @@ namespace IdentityCore.Controllers
             if (!result.Succeeded)
                 return Unauthorized(new ErrorResponse("Invalid credentials."));
 
-            string accessToken = _tokenService.GenerateAccessToken(player);
-            RefreshToken refreshToken = await _tokenService.GenerateRefreshTokenAsync(player);
+            var accessToken = _tokenService.GenerateAccessToken(player);
+            var refreshToken = await _tokenService.GenerateRefreshTokenAsync(player);
 
             return Ok(new AuthResponse(
                 accessToken: accessToken,
@@ -122,6 +122,7 @@ namespace IdentityCore.Controllers
         public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
         {
             var playerId = _userManager.GetUserId(User)!;
+
             await _tokenService.RevokeRefreshTokenAsync(request.RefreshToken, playerId);
             return NoContent();
         }
@@ -135,6 +136,7 @@ namespace IdentityCore.Controllers
         public async Task<IActionResult> LogoutAll()
         {
             var playerId = _userManager.GetUserId(User)!;
+
             await _tokenService.RevokeAllPlayerTokensAsync(playerId);
             return NoContent();
         }

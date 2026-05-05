@@ -30,8 +30,8 @@ namespace IdentityCore.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetBalance()
         {
-            string playerId = _userManager.GetUserId(User)!;
-            Wallet wallet = await _walletService.GetWalletAsync(playerId);
+            var playerId = _userManager.GetUserId(User)!;
+            var wallet = await _walletService.GetWalletAsync(playerId);
 
             return Ok(new WalletResponse(wallet));
         }
@@ -44,7 +44,7 @@ namespace IdentityCore.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Deposit([FromBody] DepositRequest request)
         {
-            string playerId = _userManager.GetUserId(User)!;
+            var playerId = _userManager.GetUserId(User)!;
             var transaction = await _walletService.DepositAsync(playerId, request.Amount);
 
             return Ok(new TransactionResponse(transaction));
@@ -58,7 +58,7 @@ namespace IdentityCore.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Withdraw([FromBody] WithdrawRequest request)
         {
-            string playerId = _userManager.GetUserId(User)!;
+            var playerId = _userManager.GetUserId(User)!;
             var transaction = await _walletService.WithdrawAsync(playerId, request.Amount);
 
             return Ok(new TransactionResponse(transaction));

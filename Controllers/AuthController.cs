@@ -53,7 +53,6 @@ namespace IdentityCore.Controllers
                 ));
             }
 
-            // Automatically provision wallet for the new player
             await _walletService.CreateWalletForPlayerAsync(player.Id);
 
             return StatusCode(StatusCodes.Status201Created, new { message = "Registration successful." });
@@ -95,18 +94,15 @@ namespace IdentityCore.Controllers
         }
 
         /// <summary>
-        /// Refresh an expired access token.
+        /// Refresh an expired access token. Does not require a valid access token.
+        /// The player ID is extracted from the refresh token itself.
         /// </summary>
-        [Authorize]
         [HttpPost("refresh")]
         [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
-            var playerId = _userManager.GetUserId(User)!;
-
-            var (accessToken, newRefreshToken, player) =
-                await _tokenService.RotateRefreshTokenAsync(request.RefreshToken, playerId);
+            var (accessToken, newRefreshToken, player) = await _tokenService.RotateRefreshTokenAsync(request.RefreshToken);
 
             return Ok(new AuthResponse(
                 accessToken: accessToken,

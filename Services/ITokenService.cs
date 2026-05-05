@@ -9,8 +9,9 @@ namespace IdentityCore.Services
 
         /// <summary>
         /// Rotates the refresh token and gives a new refresh + access token pair.
+        /// The player ID is resolved from the token itself.
         /// </summary>
-        Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken, string playerId);
+        Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken);
 
         /// <summary>
         /// Revokes the given refresh token but only if

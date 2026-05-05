@@ -63,13 +63,13 @@ namespace IdentityCore.Services
             return token;
         }
 
-        public async Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken, string playerId)
+        public async Task<(string accessToken, RefreshToken refreshToken, Player player)> RotateRefreshTokenAsync(string oldToken)
         {
             var existing = await _db.RefreshTokens
                 .Include(t => t.Player)
                 .FirstOrDefaultAsync(t => t.Token == oldToken);
 
-            if (existing is null || existing.PlayerId != playerId || !existing.IsActive)
+            if (existing is null || !existing.IsActive)
                 throw new UnauthorizedException("Invalid or inactive refresh token.");
 
             existing.RevokedAt = DateTime.UtcNow;

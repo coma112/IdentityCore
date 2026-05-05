@@ -4,7 +4,6 @@ using IdentityCore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Transactions;
 
 namespace IdentityCore.Controllers
 {
@@ -41,7 +40,7 @@ namespace IdentityCore.Controllers
         /// Deposits funds into the wallet. Minimum deposit amount is 10!
         /// </summary>
         [HttpPost("deposit")]
-        [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(TransactionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Deposit([FromBody] DepositRequest request)
         {
@@ -52,12 +51,12 @@ namespace IdentityCore.Controllers
         }
 
         /// <summary>
-        /// Withdraws funds from the wallet.
+        /// Withdraws funds from the wallet. Minimum withdrawal amount is 0.01.
         /// </summary>
         [HttpPost("withdraw")]
-        [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(TransactionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Withdraw([FromBody] DepositRequest request)
+        public async Task<IActionResult> Withdraw([FromBody] WithdrawRequest request)
         {
             string playerId = _userManager.GetUserId(User)!;
             var transaction = await _walletService.WithdrawAsync(playerId, request.Amount);

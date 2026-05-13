@@ -55,7 +55,7 @@ namespace IdentityCore.Services
                     wallet.Balance += amount;
                     wallet.UpdatedAt = DateTime.UtcNow;
 
-                    WalletTransaction entry = new WalletTransaction
+                    var entry = new WalletTransaction
                     {
                         WalletId = wallet.Id,
                         Amount = amount,
@@ -87,6 +87,8 @@ namespace IdentityCore.Services
                 }
             }
 
+            // unreachable: the last attempt always throws via the catch above,
+            // but the compiler needs a return/throw here to be happy.
             throw new ConflictException("Deposit failed due to concurrent updates. Please try again.");
         }
 
@@ -110,7 +112,7 @@ namespace IdentityCore.Services
                     wallet.Balance -= amount;
                     wallet.UpdatedAt = DateTime.UtcNow;
 
-                    WalletTransaction entry = new WalletTransaction
+                    var entry = new WalletTransaction
                     {
                         WalletId = wallet.Id,
                         Amount = -amount,
@@ -142,6 +144,7 @@ namespace IdentityCore.Services
                 }
             }
 
+            // unreachable: same as above.
             throw new ConflictException("Withdrawal failed due to concurrent updates. Please try again.");
         }
 

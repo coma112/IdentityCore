@@ -1,5 +1,5 @@
 .vs/
 [Bb]in/
-[Ob]j/
+[Oo]bj/
 *.user
 appsettings.Development.json

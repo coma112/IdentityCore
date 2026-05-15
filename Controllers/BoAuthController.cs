@@ -1,6 +1,7 @@
 ﻿using IdentityCore.DTOs;
 using IdentityCore.Entities;
 using IdentityCore.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,6 +54,31 @@ namespace IdentityCore.Controllers
             return Ok(new BoAuthResponse(accessToken, refreshToken.Token, refreshToken.ExpiresAt, boUser));
         }
 
-        // TODO: Refresh, Logout!
+        /// <summary>
+        /// Refresh an expired BO access token.
+        /// </summary>
+        [HttpPost("refresh")]
+        [ProducesResponseType(typeof(BoAuthResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Refresh([FromBody] BoRefreshTokenRequest request)
+        {
+            var (accessToken, newRefreshToken, boUser) =
+                await _boTokenService.RotateRefreshTokenAsync(request.RefreshToken);
+
+            return Ok(new BoAuthResponse(accessToken, newRefreshToken.Token, newRefreshToken.ExpiresAt, boUser));
+        }
+
+        /// <summary>
+        /// Logout, revoke the provided refresh token.
+        /// </summary>
+        [HttpPost("logout")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> Logout([FromBody] BoLogoutRequest request)
+        {
+            var boUserId = _boUserManager.GetUserId(User)!;
+            await _boTokenService.RevokeRefreshTokenAsync(request.RefreshToken, boUserId);
+            return NoContent();
+        }
     }
 }

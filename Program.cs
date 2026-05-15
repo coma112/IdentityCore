@@ -21,7 +21,7 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// identity (player)
+// identity (player) - full pipeline, registers the shared auth schemes
 builder.Services.AddIdentity<Player, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -40,7 +40,8 @@ builder.Services.AddIdentity<Player, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// identity (bo)
+// identity (bo) - AddIdentityCore to avoid scheme conflicts with Player pipeline,
+// but still gives full Identity features: lockout, password validation, token providers
 builder.Services.AddIdentityCore<BoUser>(options =>
 {
     options.Password.RequireDigit = true;

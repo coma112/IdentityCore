@@ -21,27 +21,44 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// identity
+// identity (player)
 builder.Services.AddIdentity<Player, IdentityRole>(options =>
 {
-    // password policy
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
 
-    // lockout policy -> 5 attempts = 15 min lockout
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
 
-    // username policy
     options.User.RequireUniqueEmail = true;
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+";
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
+// identity (bo)
+builder.Services.AddIdentityCore<BoUser>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+";
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders()
+.AddSignInManager<SignInManager<BoUser>>();
 
 // jwt
 var jwtSection = builder.Configuration.GetRequiredSection("Jwt");
@@ -64,14 +81,18 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSection["Issuer"],
         ValidAudience = jwtSection["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-        ClockSkew = TimeSpan.Zero, // no grace period
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role,
     };
 });
 
 // services
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IBoTokenService, BoTokenService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IBoUserService, BoUserService>();
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -100,12 +121,15 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// auto migrate on start (only dev!)
+// auto migrate + seed on start (dev only)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var boUserManager = scope.ServiceProvider.GetRequiredService<UserManager<BoUser>>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     await db.Database.MigrateAsync();
+    await BoSeeder.SeedSuperAdminAsync(boUserManager, config);
 }
 
 app.Run();
